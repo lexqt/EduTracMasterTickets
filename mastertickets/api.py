@@ -7,6 +7,7 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.util.compat import set, sorted
+from trac.web import chrome
 
 import db_default
 from model import TicketLinks
@@ -37,9 +38,9 @@ class MasterTicketsSystem(Component):
             if self.found_db_version < db_default.version:
                 return True
                 
-        # Check for our custom fields
-        if 'blocking' not in self.config['ticket-custom'] or 'blockedby' not in self.config['ticket-custom']:
-            return True
+#        # Check for our custom fields
+#        if 'blocking' not in self.config['ticket-custom'] or 'blockedby' not in self.config['ticket-custom']:
+#            return True
             
         # Fall through
         return False
@@ -125,7 +126,7 @@ class MasterTicketsSystem(Component):
     def prepare_ticket(self, req, ticket, fields, actions):
         pass
 
-    def validate_ticket(self, req, ticket):
+    def validate_ticket(self, req, ticket, action):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
@@ -153,10 +154,11 @@ class MasterTicketsSystem(Component):
             try:
                 ids = self.NUMBERS_RE.findall(ticket[field] or '')
                 for id in ids[:]:
-                    cursor.execute('SELECT id FROM ticket WHERE id=%s', (id,))
+                    cursor.execute('SELECT id FROM ticket WHERE id=%s AND project_id=%s', (id, ticket.pid))
                     row = cursor.fetchone()
                     if row is None:
                         ids.remove(id)
+                        chrome.add_warning(req, 'Ticket ID "%s" was removed from %s list as invalid' % (id, field))
                 ticket[field] = ', '.join(sorted(ids, key=lambda x: int(x)))
             except Exception, e:
                 self.log.debug('MasterTickets: Error parsing %s "%s": %s', field, ticket[field], e)

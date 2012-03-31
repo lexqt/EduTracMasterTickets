@@ -1,4 +1,10 @@
+*~
 *.pyc
-*.egg-info
-dist
-build
+.*.sw[op]
+.svn
+.git
+.hg
+/build
+/*.egg-info
+*.pyc
+*.mo

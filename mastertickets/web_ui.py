@@ -10,14 +10,16 @@ from trac.web.api import IRequestHandler, IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
                             add_ctxtnav
 from trac.ticket.api import ITicketManipulator
-from trac.ticket.model import Ticket
+from trac.ticket.model import Ticket, Milestone
 from trac.ticket.query import Query
-from trac.config import Option, BoolOption, ChoiceOption
-from trac.resource import ResourceNotFound
+from trac.config import Option, BoolOption, ChoiceOption, ListOption
+from trac.resource import ResourceNotFound, get_resource_url, get_real_resource_from_url
 from trac.util import to_unicode
 from trac.util.html import html, Markup
 from trac.util.text import shorten_line
 from trac.util.compat import set, sorted, partial
+
+from trac.project.api import ProjectManagement
 
 import graphviz
 from model import TicketLinks
@@ -43,8 +45,15 @@ class MasterTicketsModule(Component):
     graph_direction = ChoiceOption('mastertickets', 'graph_direction', choices = ['TD', 'LR', 'DT', 'RL'],
         doc='Direction of the dependency graph (TD = Top Down, DT = Down Top, LR = Left Right, RL = Right Left)')
 
+    check_actions = ListOption('mastertickets', 'check_action', 'close, resolve',
+                               doc='Check for unclosed blocking tickets when performing specified actions',
+                               switcher=True)
+
     fields = set(['blocking', 'blockedby'])
-    
+
+    def __init__(self):
+        self.pm = ProjectManagement(self.env)
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
@@ -55,6 +64,7 @@ class MasterTicketsModule(Component):
             if not data:
                 return template, data, content_type
             tkt = data['ticket']
+            self.pm.check_component_enabled(self, pid=tkt.pid)
             links = TicketLinks(self.env, tkt)
             
             for i in links.blocked_by:
@@ -64,7 +74,7 @@ class MasterTicketsModule(Component):
 
             # Add link to depgraph if needed
             if links:
-                add_ctxtnav(req, 'Depgraph', req.href.depgraph(tkt.id))
+                add_ctxtnav(req, 'Depgraph', req.href.depgraph(get_resource_url(self.env, tkt.resource)))
             
             for change in data.get('changes', {}):
                 if not change.has_key('fields'):
@@ -98,10 +108,13 @@ class MasterTicketsModule(Component):
             
         #add a link to generate a dependency graph for all the tickets in the milestone
         if req.path_info.startswith('/milestone/'):
-            if not data:
+            if not data or not 'milestone' in data:
                 return template, data, content_type
             milestone=data['milestone']
-            add_ctxtnav(req, 'Depgraph', req.href.depgraph('milestone', milestone.name))
+            self.pm.check_component_enabled(self, pid=milestone.pid)
+            ur = get_resource_url(self.env, milestone.resource)
+            ur2 = req.href.depgraph(ur)
+            add_ctxtnav(req, 'Depgraph', req.href.depgraph(get_resource_url(self.env, milestone.resource)))
 
 
         return template, data, content_type
@@ -115,12 +128,14 @@ class MasterTicketsModule(Component):
         if filename in ["report_view.html", "query_results.html", "ticket.html", "query.html"]:
             # For ticket.html
             if 'fields' in data and isinstance(data['fields'], list):
+                self.pm.check_component_enabled(self, pid=data['ticket'].pid)
                 for field in data['fields']:
                     for f in self.fields:
                         if field['name'] == f and data['ticket'][f]:
                             field['rendered'] = self._link_tickets(req, data['ticket'][f])
             # For query_results.html and query.html
             if 'groups' in data and isinstance(data['groups'], list):
+                self.pm.check_component_enabled(self, syllabus_id=data['query'].syllabus_id)
                 for group, tickets in data['groups']:
                     for ticket in tickets:
                         for f in self.fields:
@@ -128,6 +143,7 @@ class MasterTicketsModule(Component):
                                 ticket[f] = self._link_tickets(req, ticket[f])
             # For report_view.html
             if 'row_groups' in data and isinstance(data['row_groups'], list):
+                self.pm.check_component_enabled(self, syllabus_id=data['report']['syllabus_id'])
                 for group, rows in data['row_groups']:
                     for row in rows:
                         if 'cell_groups' in row and isinstance(row['cell_groups'], list):
@@ -142,8 +158,11 @@ class MasterTicketsModule(Component):
     def prepare_ticket(self, req, ticket, fields, actions):
         pass
         
-    def validate_ticket(self, req, ticket):
-        if req.args.get('action') == 'resolve' and req.args.get('action_resolve_resolve_resolution') == 'fixed': 
+    def validate_ticket(self, req, ticket, action):
+        pid = ticket.pid
+        syllabus_id = ProjectManagement(self.env).get_project_syllabus(pid)
+        actions = self.check_actions.syllabus(syllabus_id)
+        if action['alias'] in actions:
             links = TicketLinks(self.env, ticket)
             for i in links.blocked_by:
                 if Ticket(self.env, i)['status'] != 'closed':
@@ -170,23 +189,29 @@ class MasterTicketsModule(Component):
         path_info = req.path_info[10:]
         
         if not path_info:
-            raise TracError('No ticket specified')
-        
+            raise TracError('No resource specified')
+
+        is_png = path_info.endswith('/depgraph.png')
+        if is_png:
+            path_info = path_info[:-13]
+
         #list of tickets to generate the depgraph for
         tkt_ids=[]
-        milestone=None
-        split_path = path_info.split('/', 2)
 
+        resource = get_real_resource_from_url(self.env, path_info, req.args)
+        self.pm.check_component_enabled(self, pid=resource.pid)
+        is_milestone = isinstance(resource, Milestone)
         #Urls to generate the depgraph for a ticket is /depgraph/ticketnum
         #Urls to generate the depgraph for a milestone is /depgraph/milestone/milestone_name
-        if split_path[0] == 'milestone':
+        if is_milestone:
             #we need to query the list of tickets in the milestone
-            milestone = split_path[1]
-            query=Query(self.env, constraints={'milestone' : [milestone]}, max=0)
+            milestone = resource
+            query=Query(self.env, constraints={'milestone' : [milestone.name]}, max=0, project=milestone.pid)
             tkt_ids=[fields['id'] for fields in query.execute()]
         else:
             #the list is a single ticket
-            tkt_ids = [int(split_path[0])]
+            ticket = resource
+            tkt_ids = [ticket.id]
 
         #the summary argument defines whether we place the ticket id or
         #it's summary in the node's label
@@ -195,7 +220,7 @@ class MasterTicketsModule(Component):
             label_summary=int(req.args.get('summary'))
 
         g = self._build_graph(req, tkt_ids, label_summary=label_summary)
-        if path_info.endswith('/depgraph.png') or 'format' in req.args:
+        if is_png or 'format' in req.args:
             format = req.args.get('format')
             if format == 'text':
                 #in case g.__str__ returns unicode, we need to convert it in ascii
@@ -229,16 +254,22 @@ class MasterTicketsModule(Component):
             else:
                 add_ctxtnav(req, 'With labels', req.href(req.path_info, summary=1))
 
-            if milestone is None:
-                tkt = Ticket(self.env, tkt_ids[0])
-                data['tkt'] = tkt
-                add_ctxtnav(req, 'Back to Ticket #%s'%tkt.id, req.href.ticket(tkt.id))
+#            if milestone_name is None:
+            if not is_milestone:
+                data['tkt'] = ticket
+                resource = ticket.resource
+                add_ctxtnav(req, 'Back to Ticket #%s'%ticket.id,
+                            get_resource_url(self.env, resource, req.href))
             else:
-                add_ctxtnav(req, 'Back to Milestone %s'%milestone, req.href.milestone(milestone))
-            data['milestone'] = milestone
+                resource = milestone.resource
+                add_ctxtnav(req, 'Back to Milestone %s'%milestone.name,
+                            get_resource_url(self.env, resource, req.href))
+                data['milestone'] = milestone.name
             data['graph'] = g
             data['graph_render'] = partial(g.render, self.dot_path)
             data['use_gs'] = self.use_gs
+            rsc_url = get_resource_url(self.env, resource)
+            data['img_url'] = req.href.depgraph(rsc_url, 'depgraph.png', summary=g.label_summary)
             
             return 'depgraph.html', data, None
 
@@ -284,7 +315,10 @@ class MasterTicketsModule(Component):
             if i % 2:
                 items.append(word)
             elif word:
-                ticketid = word
+                try:
+                    ticketid = int(word)
+                except ValueError:
+                    return None
                 word = '#%s' % word
 
                 try:

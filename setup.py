@@ -5,7 +5,7 @@ import os
 from setuptools import setup
 
 setup(
-    name = 'TracMasterTickets',
+    name = 'EduTracMasterTickets',
     version = '3.0.2',
     packages = ['mastertickets'],
     package_data = { 'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
