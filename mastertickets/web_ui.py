@@ -159,6 +159,8 @@ class MasterTicketsModule(Component):
         pass
         
     def validate_ticket(self, req, ticket, action):
+        if not ticket.exists: # new ticket
+            return
         pid = ticket.pid
         syllabus_id = ProjectManagement(self.env).get_project_syllabus(pid)
         actions = self.check_actions.syllabus(syllabus_id)
