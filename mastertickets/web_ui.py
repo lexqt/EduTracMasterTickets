@@ -161,8 +161,7 @@ class MasterTicketsModule(Component):
     def validate_ticket(self, req, ticket, action):
         if not ticket.exists: # new ticket
             return
-        pid = ticket.pid
-        syllabus_id = ProjectManagement(self.env).get_project_syllabus(pid)
+        syllabus_id = ticket.syllabus_id
         actions = self.check_actions.syllabus(syllabus_id)
         if action['alias'] in actions:
             links = TicketLinks(self.env, ticket)
