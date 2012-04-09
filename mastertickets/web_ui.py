@@ -81,16 +81,18 @@ class MasterTicketsModule(Component):
                     continue
                 for field, field_data in change['fields'].iteritems():
                     if field in self.fields:
-                        if field_data['new'].strip():
-                            new = set([int(n) for n in field_data['new'].split(',')])
-                        else:
-                            new = set()
-                        if field_data['old'].strip():
-                            old = set([int(n) for n in field_data['old'].split(',')])
-                        else:
-                            old = set()
-                        add = new - old
-                        sub = old - new
+                        vals = {}
+                        for i in ('new', 'old'):
+                            if isinstance(field_data[i], basestring):
+                                val = field_data[i].strip()
+                            else:
+                                val = ''
+                            if val:
+                                vals[i] = set([int(n) for n in val.split(',')])
+                            else:
+                                vals[i] = set()
+                        add = vals['new'] - vals['old']
+                        sub = vals['old'] - vals['new']
                         elms = tag()
                         if add:
                             elms.append(
