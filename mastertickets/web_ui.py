@@ -163,6 +163,9 @@ class MasterTicketsModule(Component):
     def validate_ticket(self, req, ticket, action):
         if not ticket.exists: # new ticket
             return
+        if not action:
+            yield None, 'Valid action is required to validate ticket dependencies'
+            return
         syllabus_id = ticket.syllabus_id
         actions = self.check_actions.syllabus(syllabus_id)
         if action['alias'] in actions:
@@ -297,14 +300,15 @@ class MasterTicketsModule(Component):
         for link in links:
             tkt = link.tkt
             node = g[tkt.id]
+            summary = tkt['summary'].replace('"', "'")
             if label_summary:
-                node['label'] = u'#%s %s' % (tkt.id, tkt['summary'])
+                node['label'] = u'#%s %s' % (tkt.id, summary)
             else:
                 node['label'] = u'#%s'%tkt.id
             node['fillcolor'] = tkt['status'] == 'closed' and self.closed_color or self.opened_color
             node['URL'] = req.href.ticket(tkt.id)
             node['alt'] = u'Ticket #%s'%tkt.id
-            node['tooltip'] = tkt['summary']
+            node['tooltip'] = summary
             
             for n in link.blocking:
                 node > g[n]
