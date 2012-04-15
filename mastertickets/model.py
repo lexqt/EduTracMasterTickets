@@ -63,7 +63,8 @@ class TicketLinks(object):
                 if update_field is not None:
                     cursor.execute('SELECT value FROM ticket_custom WHERE ticket=%s AND name=%s',
                                    (n, str(field)))
-                    old_value = (cursor.fetchone() or ('',))[0]
+                    res = cursor.fetchone()
+                    old_value = res[0] if res else ''
                     new_value = [x.strip() for x in old_value.split(',') if x.strip()]
                     update_field(new_value)
                     new_value = ', '.join(sorted(new_value, key=lambda x: int(x)))
