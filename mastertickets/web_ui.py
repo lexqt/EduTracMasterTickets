@@ -114,8 +114,6 @@ class MasterTicketsModule(Component):
                 return template, data, content_type
             milestone=data['milestone']
             self.pm.check_component_enabled(self, pid=milestone.pid)
-            ur = get_resource_url(self.env, milestone.resource)
-            ur2 = req.href.depgraph(ur)
             add_ctxtnav(req, 'Depgraph', req.href.depgraph(get_resource_url(self.env, milestone.resource)))
 
 
@@ -205,7 +203,14 @@ class MasterTicketsModule(Component):
         tkt_ids=[]
 
         resource = get_real_resource_from_url(self.env, path_info, req.args)
-        self.pm.check_component_enabled(self, pid=resource.pid)
+
+        # project check
+        res_pid = resource.pid
+        self.pm.check_component_enabled(self, pid=res_pid)
+        cur_pid = self.pm.get_current_project(req)
+        if res_pid != cur_pid:
+            self.pm.redirect_to_project(req, res_pid)
+
         is_milestone = isinstance(resource, Milestone)
         #Urls to generate the depgraph for a ticket is /depgraph/ticketnum
         #Urls to generate the depgraph for a milestone is /depgraph/milestone/milestone_name
