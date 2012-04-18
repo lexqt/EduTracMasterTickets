@@ -323,7 +323,7 @@ class MasterTicketsModule(Component):
     def _link_tickets(self, req, tickets):
         items = []
 
-        for i, word in enumerate(re.split(r'([;,\s]+)', tickets)):
+        for i, word in enumerate(re.split(r'([;,\s]+)', tickets or '')):
             if i % 2:
                 items.append(word)
             elif word:
