@@ -64,7 +64,7 @@ class TicketLinks(object):
                     cursor.execute('SELECT value FROM ticket_custom WHERE ticket=%s AND name=%s',
                                    (n, str(field)))
                     res = cursor.fetchone()
-                    old_value = res[0] if res else ''
+                    old_value = res[0] if res and res[0] else ''
                     new_value = [x.strip() for x in old_value.split(',') if x.strip()]
                     update_field(new_value)
                     new_value = ', '.join(sorted(new_value, key=lambda x: int(x)))
