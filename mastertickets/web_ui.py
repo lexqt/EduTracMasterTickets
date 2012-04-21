@@ -132,7 +132,7 @@ class MasterTicketsModule(Component):
                 for field in data['fields']:
                     for f in self.fields:
                         if field['name'] == f and data['ticket'][f]:
-                            field['rendered'] = self._link_tickets(req, data['ticket'][f])
+                            field['rendered'] = self._link_tickets(req, data['ticket'][f], fetch_tickets=True)
             # For query_results.html and query.html
             if 'groups' in data and isinstance(data['groups'], list):
                 self.pm.check_component_enabled(self, syllabus_id=data['query'].syllabus_id)
@@ -320,7 +320,7 @@ class MasterTicketsModule(Component):
         
         return g
 
-    def _link_tickets(self, req, tickets):
+    def _link_tickets(self, req, tickets, fetch_tickets=False):
         items = []
 
         for i, word in enumerate(re.split(r'([;,\s]+)', tickets or '')):
@@ -333,18 +333,19 @@ class MasterTicketsModule(Component):
                     return None
                 word = '#%s' % word
 
-                try:
-                    ticket = Ticket(self.env, ticketid)
-                    if 'TICKET_VIEW' in req.perm(ticket.resource):
-                        word = \
-                            tag.a(
-                                '#%s' % ticket.id,
-                                class_=ticket['status'],
-                                href=req.href.ticket(int(ticket.id)),
-                                title=shorten_line(ticket['summary'])
-                            )
-                except ResourceNotFound:
-                    pass
+                if fetch_tickets:
+                    try:
+                        ticket = Ticket(self.env, ticketid)
+                        if 'TICKET_VIEW' in req.perm(ticket.resource):
+                            word = \
+                                tag.a(
+                                    '#%s' % ticket.id,
+                                    class_=ticket['status'],
+                                    href=req.href.ticket(int(ticket.id)),
+                                    title=shorten_line(ticket['summary'])
+                                )
+                    except ResourceNotFound:
+                        pass
                
                 items.append(word)
 
