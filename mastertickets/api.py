@@ -130,19 +130,18 @@ class MasterTicketsSystem(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         
-        id = unicode(ticket.id)
         links = self._prepare_links(ticket, db)
         
         # Check that ticket does not have itself as a blocker 
-        if id in links.blocking | links.blocked_by:
-            yield 'blocked_by', 'This ticket is blocking itself'
+        if ticket.id in links.blocking | links.blocked_by:
+            yield 'blockedby', 'This ticket is blocking itself'
             return
 
         # Check that there aren't any blocked_by in blocking or their parents
         blocking = links.blocking.copy()
         while len(blocking) > 0:
             if len(links.blocked_by & blocking) > 0:
-                yield 'blocked_by', 'This ticket has circular dependencies'
+                yield 'blockedby', 'This ticket has circular dependencies'
                 return
             new_blocking = set()
             for link in blocking:
@@ -153,6 +152,8 @@ class MasterTicketsSystem(Component):
         for field in ('blocking', 'blockedby'):
             try:
                 ids = self.NUMBERS_RE.findall(ticket[field] or '')
+                if len(ids) != len(set(ids)):
+                    yield field, 'Duplicate ticket IDs found'
                 for id in ids[:]:
                     cursor.execute('SELECT id FROM ticket WHERE id=%s AND project_id=%s', (id, ticket.pid))
                     row = cursor.fetchone()
