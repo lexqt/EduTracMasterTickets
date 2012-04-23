@@ -207,7 +207,7 @@ class Graph(object):
         lines = [u'digraph "%s" {' % self.name]
         lines.append(self.content_to_string(self.attributes, self.nodes, self.edges))
         for _cl_name, cl in self.clusters.iteritems():
-            lines.append(str(cl))
+            lines.append('%s'%cl)
         lines.append(u'}')
         return u'\n'.join(lines)
 
