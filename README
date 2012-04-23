@@ -2,11 +2,11 @@ Notes
 =====
 Adds basic ticket dependencies for Trac.
 
-Note: MasterTickets 3.0 requires Trac 0.12 or higher.
+Note: EduTracMasterTickets 3.0 requires Trac 0.12 (EduTrac) or higher.
 
 What is it?
 -----------
-This plugin adds "blocking" and "blocked_by" fields to each ticket, enabling you
+This plugin adds "blocking" and "blockedby" fields to each ticket, enabling you
 to express dependencies between tickets. It also provides a graphviz-based
 dependency-graph feature for those tickets having dependencies specified,
 allowing you to visually understand the dependency tree. The dependency graph
@@ -48,14 +48,26 @@ All other configuration options go in the ``[mastertickets]`` section.
 ``gs_path`` : *optional, default: gs*
     Path to the ghostscript executable.
 
+``default_format`` : *optional, default: svg*
+    Default format for rendering depgraph.
+
 ``closed_color`` : *optional, default: green*
     Color of closed tickets
+
+``bad_closed_color`` : *optional, default: orange*
+    Color of bad closed tickets
+
+``bad_closed_resolution`` : *optional, default: invalid*
+    Resolution list for bad closed tickets
 
 ``opened_color`` : *optional, default: red*
     Color of opened tickets
 
 ``graph_direction`` : *optional, default: TD*
 	Direction of the dependency graph (TD = Top Down, DT = Down Top, LR = Left Right, RL = Right Left)
+
+``check_action`` : *optional, default: close, resolve*
+	Check for unclosed blocking tickets when performing specified actions
 
 
 To enable the plugin::
@@ -71,7 +83,7 @@ To enable the plugin::
 
 Custom fields
 -------------
-While the two field names must be ``blocking`` and ``blocked_by``, you are
+While the two field names must be ``blocking`` and ``blockedby``, you are
 free to use any text for the field labels.
 
 Example

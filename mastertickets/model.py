@@ -11,10 +11,19 @@ from trac.util.text import exception_to_unicode
 class TicketLinks(object):
     """A model for the ticket links used MasterTickets."""
 
-    def __init__(self, env, tkt, db=None):
+    def __init__(self, env, tkt, db=None, ticket_cache=None):
+        '''Initialize ticket links
+        Use `ticket_cache` (if is not None) to store fetched tickets.
+        '''
         self.env = env
         if not isinstance(tkt, Ticket):
-            tkt = Ticket(self.env, tkt)
+            if ticket_cache is not None:
+                tid = int(tkt)
+                if tid not in ticket_cache:
+                    ticket_cache[tid] = Ticket(self.env, tid)
+                tkt = ticket_cache[tid]
+            else:
+                tkt = Ticket(self.env, tkt)
         self.tkt = tkt
 
         db = db or self.env.get_db_cnx()
@@ -121,13 +130,13 @@ class TicketLinks(object):
                (self.tkt.id, l(getattr(self, 'blocking', [])), l(getattr(self, 'blocked_by', [])))
 
     @staticmethod
-    def walk_tickets(env, tkt_ids):
+    def walk_tickets(env, tkt_ids, ticket_cache=None):
         """Return an iterable of all links reachable directly above or below those ones."""
         def visit(tkt, memo, next_fn):
             if tkt in memo:
                 return False
 
-            links = TicketLinks(env, tkt)
+            links = TicketLinks(env, tkt, ticket_cache)
             memo[tkt] = links
 
             for n in next_fn(links):

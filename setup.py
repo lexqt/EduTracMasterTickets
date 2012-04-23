@@ -6,26 +6,20 @@ from setuptools import setup
 
 setup(
     name = 'EduTracMasterTickets',
-    version = '3.0.2',
+    version = '3.3.0',
     packages = ['mastertickets'],
     package_data = { 'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
-    author = 'Noah Kantrowitz',
-    author_email = 'noah@coderanger.net',
+    author = 'Noah Kantrowitz, Aleksey A. Porfirov',
+    author_email = 'lexqt@yandex.ru',
     description = 'Provides support for ticket dependencies and master tickets.',
     long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
     license = 'BSD',
     keywords = 'trac plugin ticket dependencies master',
-    url = 'http://github.com/coderanger/trac-mastertickets',
+    url = 'https://github.com/lexqt/EduTracMasterTickets',
     classifiers = [
         'Framework :: Trac',
-        #'Development Status :: 1 - Planning',
-        # 'Development Status :: 2 - Pre-Alpha',
-        # 'Development Status :: 3 - Alpha',
-        # 'Development Status :: 4 - Beta',
         'Development Status :: 5 - Production/Stable',
-        # 'Development Status :: 6 - Mature',
-        # 'Development Status :: 7 - Inactive',
         'Environment :: Web Environment',
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
@@ -42,3 +36,13 @@ setup(
         ]
     }
 )
+
+#### AUTHORS ####
+## Author of original MasterTicketsPlugin:
+## Noah Kantrowitz
+## noah@coderanger.net
+##
+## Author of EduTrac adaptation, fixes and enhancements:
+## Aleksey A. Porfirov
+## lexqt@yandex.ru
+## github: lexqt
