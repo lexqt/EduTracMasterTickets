@@ -1,14 +1,17 @@
 # Created by Noah Kantrowitz on 2007-07-04.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+# Copyright (c) 2012 Aleksey A. Porfirov
 
-from trac.db import Table, Column
+from trac.db import Table, Column, ForeignKey
 
 name = 'mastertickets'
-version = 2
+version = 3
 tables = [
     Table('mastertickets', key=('source','dest'))[
         Column('source', type='integer'),
         Column('dest', type='integer'),
+        ForeignKey('source', 'ticket', 'id', on_delete='CASCADE'),
+        ForeignKey('dest', 'ticket', 'id', on_delete='CASCADE'),
     ],
 ]
 
