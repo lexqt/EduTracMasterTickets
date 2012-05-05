@@ -221,6 +221,7 @@ class MasterTicketsModule(Component):
             path_info = path_info[:-(10+len(img_format))]
 
         is_full_graph = not path_info
+        with_clusters   = req.args.getbool('with_clusters', False)
 
         cur_pid = self.pm.get_current_project(req)
 
@@ -233,15 +234,26 @@ class MasterTicketsModule(Component):
             self.pm.check_component_enabled(self, pid=cur_pid)
             db = self.env.get_read_db()
             cursor = db.cursor()
-            q = '''
-                SELECT milestone, id
-                FROM ticket
-                WHERE project_id=%s
-                ORDER BY milestone, id
-            '''
+            if with_clusters:
+                q = '''
+                    SELECT milestone, id
+                    FROM ticket
+                    WHERE project_id=%s
+                    ORDER BY milestone, id
+                '''
+            else:
+                q = '''
+                    SELECT id
+                    FROM ticket
+                    WHERE project_id=%s
+                    ORDER BY id
+                '''
             cursor.execute(q, (cur_pid,))
             rows = cursor.fetchall()
-            tkt_ids = rows
+            if with_clusters:
+                tkt_ids = rows
+            else:
+                tkt_ids = [r[0] for r in rows]
         else:
             # degraph for resource
             resource = get_real_resource_from_url(self.env, path_info, req.args)
@@ -271,7 +283,8 @@ class MasterTicketsModule(Component):
         if 'summary' in req.args:
             label_summary=int(req.args.get('summary'))
 
-        g = self._build_graph(req, tkt_ids, label_summary=label_summary, full_graph=is_full_graph)
+        clustering = is_full_graph and with_clusters
+        g = self._build_graph(req, tkt_ids, label_summary=label_summary, with_clusters=clustering)
         if is_img or img_format:
             if img_format == 'text':
                 #in case g.__str__ returns unicode, we need to convert it in ascii
@@ -305,6 +318,8 @@ class MasterTicketsModule(Component):
                 'use_gs': self.use_gs,
                 'full_graph': is_full_graph,
                 'img_format': self.default_format,
+                'summary': label_summary,
+                'with_clusters': with_clusters,
             }
 
             #add a context link to enable/disable labels in nodes
@@ -329,11 +344,11 @@ class MasterTicketsModule(Component):
                 rsc_url = get_resource_url(self.env, resource)
 
             data['img_url'] = req.href.depgraph(rsc_url, 'depgraph.%s' % self.default_format,
-                                                summary=g.label_summary)
+                                                summary=g.label_summary, with_clusters=int(with_clusters))
 
             return 'depgraph.html', data, None
 
-    def _build_graph(self, req, tkt_ids, label_summary=0, full_graph=False):
+    def _build_graph(self, req, tkt_ids, label_summary=0, with_clusters=False):
         g = graphviz.Graph()
         g.label_summary = label_summary
 
@@ -376,7 +391,7 @@ class MasterTicketsModule(Component):
 
         ticket_cache = {}
 
-        if full_graph:
+        if with_clusters:
             milestone_tkt_ids = sorted(tkt_ids)
             tkt_ids = []
             tickets = {} # { <milestone_name or None>: (<cluster or graph>, <tkt_ids list>), ... }
@@ -410,7 +425,7 @@ class MasterTicketsModule(Component):
         for link in links:
             node = create_node(link.tkt)
 
-            if full_graph:
+            if with_clusters:
                 milestone_from = link.tkt['milestone'] or None
                 stor = tickets[milestone_from][0]
                 stor[link.tkt.id] # include node

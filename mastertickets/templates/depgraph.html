@@ -19,11 +19,32 @@
   </head>
   <body>
     <div id="content">
+
       <py:choose test="">
         <h1 py:when="full_graph">Dependency Graph for project</h1>
         <h1 py:when="milestone">Dependency Graph for milestone $milestone</h1>
         <h1 py:when="tkt">Dependency Graph for Ticket #$tkt.id</h1>
       </py:choose>
+
+      <!-- Preferences -->
+      <form id="prefs" method="get" action="">
+        <div>
+          <label>
+            <input type="checkbox" id="summary" name="summary" value="1" checked="${summary or None}" />
+            Show ticket summaries
+          </label>
+        </div>
+        <div>
+          <label>
+            <input type="checkbox" id="with_clusters" name="with_clusters" value="1" checked="${with_clusters or None}" />
+            Cluster tickets by milestones
+          </label>
+        </div>
+        <div class="buttons">
+          <input type="submit" value="${_('Update')}" />
+        </div>
+      </form>
+
       <py:choose test="">
         <py:when test="img_format == 'png'">
           <img src="${img_url}"
