@@ -1,5 +1,7 @@
 # Created by Noah Kantrowitz on 2007-07-04.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+# Copyright (c) 2012 Aleksey A. Porfirov
+
 import copy
 from datetime import datetime
 

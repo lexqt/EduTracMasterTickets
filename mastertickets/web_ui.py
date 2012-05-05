@@ -1,3 +1,6 @@
+# Copyright (c) 2007 Noah Kantrowitz
+# Copyright (c) 2012 Aleksey A. Porfirov
+
 import subprocess
 import re
 import textwrap
@@ -23,6 +26,9 @@ from trac.project.api import ProjectManagement
 
 import graphviz
 from model import TicketLinks
+from api import MasterTicketsSystem, _
+
+
 
 class MasterTicketsModule(Component):
     """Provides support for ticket dependencies."""
@@ -62,6 +68,7 @@ class MasterTicketsModule(Component):
     IMAGE_RE = re.compile(r'depgraph\.([a-z]{3,5})$')
 
     def __init__(self):
+        MasterTicketsSystem(self.env)
         self.pm = ProjectManagement(self.env)
 
     # INavigationContributor
@@ -73,7 +80,7 @@ class MasterTicketsModule(Component):
         if 'TICKET_VIEW' not in req.perm:
             return
         yield ('mainnav', 'depgraph',
-               tag.a('Depgraph', href=req.href.depgraph()))
+               tag.a(_('Depgraph'), href=req.href.depgraph()))
 
     # IRequestFilter
 
@@ -91,7 +98,7 @@ class MasterTicketsModule(Component):
 
             # Add link to depgraph if needed
             if links:
-                add_ctxtnav(req, 'Depgraph', req.href.depgraph(get_resource_url(self.env, tkt.resource)))
+                add_ctxtnav(req, _('Depgraph'), req.href.depgraph(get_resource_url(self.env, tkt.resource)))
 
             for change in data.get('changes', {}):
                 if not change.has_key('fields'):
@@ -131,7 +138,7 @@ class MasterTicketsModule(Component):
                 return template, data, content_type
             milestone=data['milestone']
             self.pm.check_component_enabled(self, pid=milestone.pid)
-            add_ctxtnav(req, 'Depgraph', req.href.depgraph(get_resource_url(self.env, milestone.resource)))
+            add_ctxtnav(req, _('Depgraph'), req.href.depgraph(get_resource_url(self.env, milestone.resource)))
 
 
         return template, data, content_type
@@ -181,7 +188,7 @@ class MasterTicketsModule(Component):
         if not ticket.exists: # new ticket
             return
         if not action:
-            yield None, 'Valid action is required to validate ticket dependencies'
+            yield None, _('Valid ticket action must be provided to validate ticket dependencies')
             return
         syllabus_id = ticket.syllabus_id
         actions = self.check_actions.syllabus(syllabus_id)
@@ -189,7 +196,7 @@ class MasterTicketsModule(Component):
             links = TicketLinks(self.env, ticket)
             for i in links.blocked_by:
                 if Ticket(self.env, i)['status'] != 'closed':
-                    yield None, 'Ticket #%s is blocking this ticket'%i
+                    yield None, _('Ticket #%(id)s is blocking this ticket', id=i)
 
     # ITemplateProvider
 
@@ -322,24 +329,18 @@ class MasterTicketsModule(Component):
                 'with_clusters': with_clusters,
             }
 
-            #add a context link to enable/disable labels in nodes
-            if label_summary:
-                add_ctxtnav(req, 'Without labels', req.href(req.path_info, summary=0))
-            else:
-                add_ctxtnav(req, 'With labels', req.href(req.path_info, summary=1))
-
             if is_full_graph:
                 rsc_url = None
             else:
                 if is_milestone:
                     resource = milestone.resource
-                    add_ctxtnav(req, 'Back to Milestone %s'%milestone.name,
+                    add_ctxtnav(req, _('Back to Milestone %(name)s', name=milestone.name),
                                 get_resource_url(self.env, resource, req.href))
                     data['milestone'] = milestone.name
                 else: # ticket
                     data['tkt'] = ticket
                     resource = ticket.resource
-                    add_ctxtnav(req, 'Back to Ticket #%s'%ticket.id,
+                    add_ctxtnav(req, _('Back to Ticket #%(id)s', id=ticket.id),
                                 get_resource_url(self.env, resource, req.href))
                 rsc_url = get_resource_url(self.env, resource)
 
@@ -385,7 +386,7 @@ class MasterTicketsModule(Component):
                 color = self.opened_color
             node['fillcolor'] = color
             node['URL'] = req.href.ticket(tkt.id)
-            node['alt'] = u'Ticket #%s'%tkt.id
+            node['alt'] = _('Ticket #%(id)s', id=tkt.id)
             node['tooltip'] = summary.replace('\\n', ' &#10;')
             return node
 

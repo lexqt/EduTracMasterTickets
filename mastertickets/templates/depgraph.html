@@ -2,28 +2,31 @@
 	depgraph
 	Created by  on 2007-12-21.
 	Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+	Copyright (c) 2012 Aleksey A. Porfirov.
 -->
 <!DOCTYPE html
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
-      xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="mastertickets">
   <xi:include href="layout.html" />
   <head>
     <py:choose test="">
-      <title py:when="full_graph">Dependency Graph for project</title>
-      <title py:when="milestone">Dependency Graph for milestone $milestone</title>
-      <title py:when="tkt">Dependency Graph #$tkt.id</title>
+      <title py:when="full_graph">Dependency Graph for Project</title>
+      <title py:when="milestone" i18n:msg="name">Dependency Graph for Milestone $milestone</title>
+      <title py:when="tkt" i18n:msg="id">Dependency Graph for Ticket #$tkt.id</title>
     </py:choose>
   </head>
   <body>
     <div id="content">
 
       <py:choose test="">
-        <h1 py:when="full_graph">Dependency Graph for project</h1>
-        <h1 py:when="milestone">Dependency Graph for milestone $milestone</h1>
-        <h1 py:when="tkt">Dependency Graph for Ticket #$tkt.id</h1>
+        <h1 py:when="full_graph">Dependency Graph for Project</h1>
+        <h1 py:when="milestone" i18n:msg="name">Dependency Graph for Milestone $milestone</h1>
+        <h1 py:when="tkt" i18n:msg="id">Dependency Graph for Ticket #$tkt.id</h1>
       </py:choose>
 
       <!-- Preferences -->
@@ -34,7 +37,7 @@
             Show ticket summaries
           </label>
         </div>
-        <div>
+        <div py:if="full_graph">
           <label>
             <input type="checkbox" id="with_clusters" name="with_clusters" value="1" checked="${with_clusters or None}" />
             Cluster tickets by milestones
@@ -55,7 +58,7 @@
         </py:when>
         <object py:when="img_format == 'svg'" data="${img_url}" type="image/svg+xml"></object> 
       </py:choose>
-      <p><a href="${img_url}" target="_blank">Open graph image</a> on new page.</p>
+      <p i18n:msg=""><a href="${img_url}" target="_blank">Open graph image</a> on new page.</p>
     </div>
   </body>
 </html>

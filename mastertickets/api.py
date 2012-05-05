@@ -1,5 +1,7 @@
 # Created by Noah Kantrowitz on 2007-07-04.
 # Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+# Copyright (c) 2012 Aleksey A. Porfirov
+
 import re
 
 from trac.core import *
@@ -9,9 +11,17 @@ from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.util.compat import set, sorted
 from trac.web import chrome
 
+from trac.util.translation import domain_functions
+
 import db_default
 from model import TicketLinks
 from trac.ticket.model import Ticket
+
+
+_, tag_, N_, add_domain = \
+    domain_functions('mastertickets', ('_', 'tag_', 'N_', 'add_domain'))
+
+
 
 class MasterTicketsSystem(Component):
     """Central functionality for the MasterTickets plugin."""
@@ -19,7 +29,12 @@ class MasterTicketsSystem(Component):
     implements(IEnvironmentSetupParticipant, ITicketChangeListener, ITicketManipulator)
     
     NUMBERS_RE = re.compile(r'\d+', re.U)
-    
+
+    def __init__(self):
+        import pkg_resources
+        locale_dir = pkg_resources.resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
         self.found_db_version = 0
@@ -134,14 +149,14 @@ class MasterTicketsSystem(Component):
         
         # Check that ticket does not have itself as a blocker 
         if ticket.id in links.blocking | links.blocked_by:
-            yield 'blockedby', 'This ticket is blocking itself'
+            yield 'blockedby', _('This ticket is blocking itself')
             return
 
         # Check that there aren't any blocked_by in blocking or their parents
         blocking = links.blocking.copy()
         while len(blocking) > 0:
             if len(links.blocked_by & blocking) > 0:
-                yield 'blockedby', 'This ticket has circular dependencies'
+                yield 'blockedby', _('This ticket has circular dependencies')
                 return
             new_blocking = set()
             for link in blocking:
@@ -153,7 +168,7 @@ class MasterTicketsSystem(Component):
             try:
                 ids = self.NUMBERS_RE.findall(ticket[field] or '')
                 if len(ids) != len(set(ids)):
-                    yield field, 'Duplicate ticket IDs found'
+                    yield field, _('Duplicate ticket IDs found')
                 for id in ids[:]:
                     cursor.execute('SELECT id FROM ticket WHERE id=%s AND project_id=%s', (id, ticket.pid))
                     row = cursor.fetchone()
@@ -163,7 +178,7 @@ class MasterTicketsSystem(Component):
                 ticket[field] = ', '.join(sorted(ids, key=lambda x: int(x)))
             except Exception, e:
                 self.log.debug('MasterTickets: Error parsing %s "%s": %s', field, ticket[field], e)
-                yield field, 'Not a valid list of ticket IDs'
+                yield field, _('Not a valid list of ticket IDs')
 
     # Internal methods
     def _prepare_links(self, tkt, db):

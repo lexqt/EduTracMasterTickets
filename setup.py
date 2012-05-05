@@ -4,11 +4,33 @@ import os
 
 from setuptools import setup
 
+PACKAGE = 'mastertickets'
+
+extra = {} 
+try:
+    from trac.util.dist import get_l10n_cmdclass
+    cmdclass = get_l10n_cmdclass()
+    if cmdclass:
+        extra['cmdclass'] = cmdclass
+        extractors = [
+            ('**.py',                'python', None),
+            ('**/templates/**.html', 'genshi', None),
+            ('**/templates/**.txt',  'genshi', {
+                'template_class': 'genshi.template:NewTextTemplate',
+            }),
+        ]
+        extra['message_extractors'] = {
+            PACKAGE: extractors,
+        }
+except ImportError:
+    pass
+
 setup(
     name = 'EduTracMasterTickets',
-    version = '3.3.0',
-    packages = ['mastertickets'],
-    package_data = { 'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
+    version = '3.3.1',
+    packages = [PACKAGE],
+    package_data = { PACKAGE: ['templates/*.html',
+                               'locale/*/LC_MESSAGES/*.mo'] },
 
     author = 'Noah Kantrowitz, Aleksey A. Porfirov',
     author_email = 'lexqt@yandex.ru',
@@ -22,19 +44,18 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'License :: OSI Approved :: BSD License',
-        'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
     
-    install_requires = ['Trac>=0.12'],
-
     entry_points = {
         'trac.plugins': [
             'mastertickets.web_ui = mastertickets.web_ui',
             'mastertickets.api = mastertickets.api',
         ]
-    }
+    },
+
+    **extra
 )
 
 #### AUTHORS ####

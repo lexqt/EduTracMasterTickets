@@ -1,0 +1,102 @@
+# Translations template for EduTracMasterTickets.
+# Copyright (C) 2012 ORGANIZATION
+# This file is distributed under the same license as the
+# EduTracMasterTickets project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: EduTracMasterTickets 3.3.1\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2012-05-06 01:01+0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: mastertickets/api.py:152
+msgid "This ticket is blocking itself"
+msgstr ""
+
+#: mastertickets/api.py:159
+msgid "This ticket has circular dependencies"
+msgstr ""
+
+#: mastertickets/api.py:171
+msgid "Duplicate ticket IDs found"
+msgstr ""
+
+#: mastertickets/api.py:181
+msgid "Not a valid list of ticket IDs"
+msgstr ""
+
+#: mastertickets/web_ui.py:81 mastertickets/web_ui.py:99
+#: mastertickets/web_ui.py:139
+msgid "Depgraph"
+msgstr ""
+
+#: mastertickets/web_ui.py:189
+msgid "Valid ticket action must be provided to validate ticket dependencies"
+msgstr ""
+
+#: mastertickets/web_ui.py:197
+#, python-format
+msgid "Ticket #%(id)s is blocking this ticket"
+msgstr ""
+
+#: mastertickets/web_ui.py:335
+#, python-format
+msgid "Back to Milestone %(name)s"
+msgstr ""
+
+#: mastertickets/web_ui.py:341
+#, python-format
+msgid "Back to Ticket #%(id)s"
+msgstr ""
+
+#: mastertickets/web_ui.py:387
+#, python-format
+msgid "Ticket #%(id)s"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:18
+#: mastertickets/templates/depgraph.html:27
+msgid "Dependency Graph for Project"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:19
+#: mastertickets/templates/depgraph.html:28
+#, python-format
+msgid "Dependency Graph for Milestone %(name)s"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:20
+#: mastertickets/templates/depgraph.html:29
+#, python-format
+msgid "Dependency Graph for Ticket #%(id)s"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:36
+msgid "Show ticket summaries"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:42
+msgid "Cluster tickets by milestones"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:47
+msgid "Update"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:53
+msgid "Dependency graph"
+msgstr ""
+
+#: mastertickets/templates/depgraph.html:61
+msgid "[1:Open graph image] on new page."
+msgstr ""
+
